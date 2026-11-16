@@ -1,0 +1,9 @@
+[package]
+name = "lattice-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+lattice-core.workspace = true
+gpui = { version = "0.2.2", default-features = false, features = ["font-kit", "wayland", "x11", "windows-manifest", "test-support"] }

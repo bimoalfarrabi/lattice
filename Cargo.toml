@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = ["crates/lattice-core", "crates/lattice-app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[workspace.dependencies]
+lattice-core = { path = "crates/lattice-core" }
+
+[patch.crates-io]
+xattr = { path = "vendor/xattr" }
+
+# Full debug info made target/debug reach 79 GB on this machine. Line tables
+# keep backtraces readable at a fraction of the size.
+[profile.dev]
+debug = "line-tables-only"
