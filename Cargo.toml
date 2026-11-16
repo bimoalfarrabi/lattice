@@ -17,3 +17,6 @@ xattr = { path = "vendor/xattr" }
 # keep backtraces readable at a fraction of the size.
 [profile.dev]
 debug = "line-tables-only"
+
+[profile.release]
+strip = true

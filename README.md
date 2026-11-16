@@ -60,6 +60,15 @@ env -u WAYLAND_DISPLAY cargo run -p lattice-app
 The window refuses to go below 1280 by 800, the size at which the floating
 transport still clears the corner buttons.
 
+## Releases
+
+Every push to `main` builds release binaries for Linux, Windows and macOS and
+uploads them as workflow artifacts. Pushing a tag such as `v0.1.0` attaches the
+same binaries to a GitHub release.
+
+The Linux binary needs `libxkbcommon-x11`, `libwayland`, `libX11` and a Vulkan
+loader at runtime, which a normal desktop already has.
+
 ## Where files live
 
 | Platform | Drawing | Exports |
