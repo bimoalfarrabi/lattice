@@ -21,6 +21,14 @@ Unicode true
   !define ICON "packaging\icons\lattice.ico"
 !endif
 
+; makensis changes the working directory to this script's directory, so every
+; relative path below would resolve inside packaging\windows. Step back to the
+; repository root first.
+!ifndef ROOT
+  !define ROOT "..\.."
+!endif
+!cd "${ROOT}"
+
 !define APP_NAME "Lattice"
 !define APP_EXE "Lattice.exe"
 !define PUBLISHER "bimoalfarrabi"
