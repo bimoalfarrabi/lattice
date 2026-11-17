@@ -61,9 +61,14 @@ Active tools use the accent soft surface. Disabled controls use the muted ink.
 ## Top bar
 
 Absolute, `16` from the top, `34` from the left, `22` from the right, `50` high.
-Left: `LogoFX`, `BrandX` with a small crown, `CreateX`, at `20px` semibold with
-`31` between the outer labels and `6` between `BrandX` and the crown. Active
-label is ink; the others are muted.
+Left: `LogoFX`, `BrandX` with a small crown, `CreateX`, at `18.5px` semibold in
+`Inter Variable`, with `31` between the outer labels and `6` between `BrandX`
+and the crown. Active label is ink; the others are muted.
+
+The family is `Inter Variable`, not `Inter`. The bundled file is the variable
+font and its name table calls the family `Inter Variable`. Asking for `Inter`
+matches nothing: on Linux the text silently fell back to a system face, and on
+Windows it panicked because the release build carried a test-only feature.
 
 Right: four circular `42` buttons at `6` gap for share, contact, pricing, and
 account.
@@ -162,8 +167,8 @@ impression.
 
 | Element | Reference, window pixels | This build |
 |---|---|---|
-| Top bar text | LogoFX 43 to 107, BrandX 142 to 203, crown 212 to 225, CreateX 260 to 328 | 44 to 108, 142 to 205, 214 to 227, 261 to 331 |
-| Top bar gaps | 35, 9, 35 | 34, 8, 34 |
+| Top bar text | LogoFX 43 to 107, BrandX 142 to 203, crown 212 to 225, CreateX 260 to 328 | 43 to 108, 142 to 203, 213 to 226, 260 to 328 |
+| Top bar gaps | 35, 9, 35 | 34, 10, 34 |
 | Transport row | 287 to 1042 | 286 to 1037 |
 | Export pill | 903 to 1034 by 926 to 969, so 131 by 44 | 895 to 1037 by 925 to 968, so 142 by 44 |
 | Zoom pill | 726 to 890, so 164 wide | 724 to 884, so 161 wide |

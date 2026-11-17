@@ -142,6 +142,11 @@ is gone, recapture it first.
 The CI matrix also refuses a `v*` tag whose name does not match the version in
 `Cargo.toml`, so a release cannot be published under the wrong number.
 
+The Windows package was run once from WSL against the installed binary: it
+started, painted the screenshot state, and wrote `%APPDATA%\Lattice\drawing.json`
+with the expected marks. That is what caught the font panic described in
+[decisions.md](decisions.md) entry 22.
+
 ## Build size
 
 `[profile.dev]` sets `debug = "line-tables-only"`. Full debug info pushed

@@ -182,6 +182,29 @@ build job already produced, so there is one build and no second pipeline.
   `lattice.nsi` runs `!cd` back to the repository root before touching any
   relative path. Without it the icon resolves inside `packaging/windows`.
 
+## 22. The font family is Inter Variable, and test features stay out of the release
+
+The bundled file is `InterVariable.ttf`, and its name table calls the family
+`Inter Variable`. The app asked for `Inter`. Two different failures came from
+that one mistake:
+
+- On Linux the lookup matched nothing and the text fell back to a system face
+  without a warning. Every layout measurement in this document was therefore
+  tuned against the wrong font, which is how the top bar ended at 20 pixels
+  while the reference is nearer 18.5.
+- On Windows the same lookup panicked instead of falling back, because gpui's
+  `test-support` feature was enabled in the release build, and that feature
+  turns a missing font into a panic. The installed application closed the
+  moment it was launched.
+
+Both are fixed. The family is `Inter Variable`, the release no longer carries
+`test-support` (it moved to `[dev-dependencies]`, where the test context
+needs it), and the top bar is `18.5px`, which now matches the reference within
+a pixel on every label.
+
+The lesson worth keeping: check what font actually resolved rather than what
+was requested. `cx.text_system().all_font_names()` answers that in one line.
+
 ## Open decisions
 
 1. The name Lattice and the icon style were chosen during implementation and
