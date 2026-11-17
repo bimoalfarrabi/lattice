@@ -56,6 +56,12 @@ pub struct Studio {
     shot_mode: bool,
 
     hovered: Option<Cell>,
+    /// Last pointer position in window space, and whether it is over the
+    /// canvas. The hover cell is derived from these two rather than set on the
+    /// move event alone, because move and hover notifications arrive in an
+    /// order the app cannot rely on.
+    pointer: Option<gpui::Point<Pixels>>,
+    pointer_inside: bool,
     focused: Option<Cell>,
     drag: Option<Drag>,
     panning: Option<(gpui::Point<Pixels>, View)>,
@@ -90,6 +96,8 @@ impl Studio {
             armed_clear: false,
             shot_mode: std::env::var_os("LATTICE_SHOT").is_some(),
             hovered: None,
+            pointer: None,
+            pointer_inside: false,
             focused: None,
             drag: None,
             panning: None,
@@ -343,6 +351,20 @@ impl Studio {
         cx.notify();
     }
 
+    /// Recomputes the hovered cell from the tracked pointer and notifies only
+    /// when the cell actually changes.
+    fn refresh_hover(&mut self, cx: &mut Context<Self>) {
+        let next = if self.pointer_inside && !self.preview && !self.shot_mode {
+            self.pointer.and_then(|position| self.hit(position))
+        } else {
+            None
+        };
+        if next != self.hovered {
+            self.hovered = next;
+            cx.notify();
+        }
+    }
+
     fn hit(&self, position: gpui::Point<Pixels>) -> Option<Cell> {
         let (_, index) = self.index.as_ref()?;
         let plane = canvas::to_plane(self.bounds.get(), self.view, self.scale(), position);
@@ -496,6 +518,7 @@ impl Studio {
         self.preview = false;
         self.view = View::default();
         self.hovered = None;
+        self.pointer_inside = false;
         self.focused = None;
         self.rebuild();
         cx.notify();
@@ -1091,6 +1114,14 @@ impl Studio {
                 div()
                     .size_full()
                     .id("canvas-surface")
+                    // GPUI delivers mouse moves only while the pointer is over
+                    // the element, so without this the last hovered cell stays
+                    // tinted after the pointer leaves the window or crosses
+                    // into the panel.
+                    .on_hover(cx.listener(|this, hovered: &bool, _, cx| {
+                        this.pointer_inside = *hovered;
+                        this.refresh_hover(cx);
+                    }))
                     .child(
                 canvas(
                     move |b, _, _| bounds.set(b),
@@ -1149,15 +1180,8 @@ impl Studio {
                         cx.notify();
                         return;
                     }
-                    let hovered = if this.preview || this.shot_mode {
-                        None
-                    } else {
-                        this.hit(event.position)
-                    };
-                    if hovered != this.hovered {
-                        this.hovered = hovered;
-                        cx.notify();
-                    }
+                    this.pointer = Some(event.position);
+                    this.refresh_hover(cx);
                     if let Some((from, erase)) = this.drag.as_ref().map(|d| (d.last, d.erase)) {
                         let plane = canvas::to_plane(this.bounds.get(), this.view, this.scale(), event.position);
                         if let Some(drag) = this.drag.as_mut() {

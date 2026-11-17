@@ -11,7 +11,11 @@ client window. A no-op X error handler keeps a failed request from aborting the
 process; the script reports the null image instead.
 
 Usage:
-    python3 tools/screenshot/grab.py out.png
+    python3 tools/screenshot/grab.py out.png [--pointer X Y]
+
+`--pointer` places the mouse at that window relative point before the grab,
+which is how hover states are captured. Without it the pointer is parked in the
+corner of the screen so no hover tint appears.
 
 Prints the size, the distinct colour count and the mean red channel of one row,
 which is enough to tell a real capture from a black or empty one.
@@ -281,7 +285,13 @@ def encode_png(width, height, rows):
 
 def main():
     if len(sys.argv) < 2:
-        raise SystemExit("usage: grab.py out.png")
+        raise SystemExit("usage: grab.py out.png [--pointer X Y]")
+
+    pointer = None
+    if "--pointer" in sys.argv:
+        index = sys.argv.index("--pointer")
+        pointer = (int(sys.argv[index + 1]), int(sys.argv[index + 2]))
+        del sys.argv[index : index + 3]
 
     x11 = load()
     keep = silence_errors(x11)
@@ -294,14 +304,26 @@ def main():
     # Park the pointer in the bottom right corner, outside the window, so the
     # capture does not include a hover tint that depends on where the mouse was.
     root_width, root_height = root_size(x11, display, root)
-    x11.XWarpPointer(display, 0, root, 0, 0, 0, 0, root_width - 2, root_height - 2)
-    x11.XFlush(display)
-    time.sleep(0.4)
-
+    if pointer is None:
+        x11.XWarpPointer(display, 0, root, 0, 0, 0, 0, root_width - 2, root_height - 2)
+        x11.XFlush(display)
+        time.sleep(0.4)
     target = pick_client(x11, display, root)
     if not target:
         raise SystemExit("no window large enough to grab")
     window, width, height = target
+
+    if pointer is not None:
+        at_x = ctypes.c_int()
+        at_y = ctypes.c_int()
+        child = ctypes.c_ulong()
+        x11.XTranslateCoordinates(
+            display, window, root, pointer[0], pointer[1],
+            ctypes.byref(at_x), ctypes.byref(at_y), ctypes.byref(child),
+        )
+        x11.XWarpPointer(display, 0, root, 0, 0, 0, 0, at_x.value, at_y.value)
+        x11.XFlush(display)
+        time.sleep(0.8)
 
     image = x11.XGetImage(
         display, window, 0, 0, width, height, ctypes.c_ulong(0xFFFFFFFFFFFFFFFF), ZPIXMAP
