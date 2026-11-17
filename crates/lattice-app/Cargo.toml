@@ -13,3 +13,8 @@ gpui = { version = "0.2.2", default-features = false, features = ["font-kit", "w
 # the feature on, a font that fails to resolve panics instead of falling back.
 [dev-dependencies]
 gpui = { version = "0.2.2", default-features = false, features = ["font-kit", "wayland", "x11", "windows-manifest", "test-support"] }
+
+# Embeds the icon and a version resource into the Windows executable. Only used
+# when the build host is Windows, which is where release builds happen.
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
