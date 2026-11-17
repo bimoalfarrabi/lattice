@@ -147,6 +147,16 @@ started, painted the screenshot state, and wrote `%APPDATA%\Lattice\drawing.json
 with the expected marks. That is what caught the font panic described in
 [decisions.md](decisions.md) entry 22.
 
+## Tracing pointer problems
+
+Setting `LATTICE_TRACE` to a file path makes the studio append a line for every
+pointer move, hover change and recomputed hover cell. It is the only way to see
+what a window on another platform is doing when the symptom only appears there.
+
+```sh
+LATTICE_TRACE=/tmp/lattice-trace.log ./target/release/lattice-app
+```
+
 ## Build size
 
 `[profile.dev]` sets `debug = "line-tables-only"`. Full debug info pushed

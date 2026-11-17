@@ -1490,10 +1490,13 @@ impl Render for Studio {
 }
 
 /// Opens the studio window.
-/// Appends a diagnostic line when `LATTICE_TRACE` names a file. Used to chase
-/// pointer problems on platforms that cannot be debugged locally.
+/// Appends a diagnostic line when `LATTICE_TRACE` names a file. It exists
+/// because some platform behaviour, such as whether a window reports the
+/// pointer leaving, cannot be observed from outside the process.
 pub fn trace(message: &str) {
-    let Ok(path) = std::env::var("LATTICE_TRACE") else {
+    static PATH: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
+    let path = PATH.get_or_init(|| std::env::var("LATTICE_TRACE").ok());
+    let Some(path) = path else {
         return;
     };
     use std::io::Write as _;

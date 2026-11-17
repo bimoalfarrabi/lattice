@@ -205,6 +205,26 @@ a pixel on every label.
 The lesson worth keeping: check what font actually resolved rather than what
 was requested. `cx.text_system().all_font_names()` answers that in one line.
 
+## 23. The hover cell is derived, not pushed, and one case remains
+
+The highlight was written only by mouse move events, so its accuracy depended
+on the order in which the platform delivered move and hover notifications. On
+Windows that produced a highlight several cells away from the pointer: with the
+0.1.1 build a pointer at 700,500 lit the cell at 943,261.
+
+The studio now keeps the last pointer position and whether the pointer is over
+the canvas, and recomputes the hovered cell from both whenever either changes.
+On Windows the highlight now sits on the cell under the pointer for every
+position tested.
+
+One case is still open. When the pointer leaves the window without entering
+another element, this build does not receive a mouse leave event, so the last
+cell stays tinted until the pointer returns. `Window::is_window_hovered` and the
+element hover callbacks both depend on that same message, and the raw cursor
+position is not exposed, so the app cannot detect it without polling the
+platform directly. `LATTICE_TRACE` exists to confirm this on a machine that can
+reproduce it.
+
 ## Open decisions
 
 1. The name Lattice and the icon style were chosen during implementation and
