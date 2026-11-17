@@ -34,7 +34,7 @@ jobs:
         run: cargo test --workspace
 
   build:
-    name: Release ${{ matrix.artifact }}
+    name: Package ${{ matrix.artifact }}
     needs: test
     runs-on: ${{ matrix.os }}
     strategy:
@@ -43,16 +43,20 @@ jobs:
         include:
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
-            artifact: lattice-linux-x86_64
+            arch: x86_64
+            artifact: installers-linux
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: lattice-windows-x86_64.exe
+            arch: x86_64
+            artifact: installers-windows
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact: lattice-macos-aarch64
+            arch: arm64
+            artifact: installers-macos-arm64
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact: lattice-macos-x86_64
+            arch: x86_64
+            artifact: installers-macos-x86_64
     steps:
       - uses: actions/checkout@v4
 
@@ -72,22 +76,58 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          echo "building Lattice $version for ${{ matrix.target }}"
+          if [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            if [[ "${GITHUB_REF_NAME#v}" != "$version" ]]; then
+              echo "tag ${GITHUB_REF_NAME} does not match Cargo version $version"
+              exit 1
+            fi
+          fi
+
       - name: Build
         run: cargo build --release --target ${{ matrix.target }} -p lattice-app
 
-      - name: Stage binary
-        shell: bash
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
         run: |
-          mkdir -p dist
-          suffix=""
-          if [ "${{ runner.os }}" = "Windows" ]; then suffix=".exe"; fi
-          cp "target/${{ matrix.target }}/release/lattice-app${suffix}" "dist/${{ matrix.artifact }}"
-          ls -l dist
+          packaging/linux/build-packages.sh \
+            "target/${{ matrix.target }}/release/lattice-app" \
+            "${{ steps.version.outputs.value }}" dist
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          $env:Path += ";C:\Program Files (x86)\NSIS"
+          makensis `
+            "/DVERSION=${{ steps.version.outputs.value }}" `
+            "/DBINARY=target\${{ matrix.target }}\release\lattice-app.exe" `
+            "/DOUT=dist\lattice-${{ steps.version.outputs.value }}-windows-${{ matrix.arch }}-setup.exe" `
+            packaging\windows\lattice.nsi
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          packaging/macos/build-dmg.sh \
+            "target/${{ matrix.target }}/release/lattice-app" \
+            "${{ steps.version.outputs.value }}" \
+            "${{ matrix.arch }}" dist
+
+      - name: List packages
+        shell: bash
+        run: ls -l dist
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: dist/${{ matrix.artifact }}
+          path: dist/*
           if-no-files-found: error
 
   release:

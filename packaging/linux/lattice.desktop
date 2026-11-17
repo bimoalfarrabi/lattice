@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Lattice
+GenericName=Grid logo maker
+Comment=Paint cells on a generated lattice and export SVG or PNG
+Exec=lattice
+Icon=lattice
+Terminal=false
+Categories=Graphics;2DGraphics;VectorGraphics;
+Keywords=logo;grid;svg;lattice;icon;
+StartupWMClass=lattice-app
