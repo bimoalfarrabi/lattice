@@ -159,16 +159,50 @@ def png_bytes(size, pixels):
 
 
 def resize(pixels, source_size, target_size):
+    """Box filter with alpha weighted colour, so edges do not fringe."""
     out = bytearray(target_size * target_size * 4)
     ratio = source_size / target_size
     for y in range(target_size):
+        y0 = int(y * ratio)
+        y1 = max(y0 + 1, min(source_size, int((y + 1) * ratio)))
         for x in range(target_size):
-            sx = min(source_size - 1, int(x * ratio))
-            sy = min(source_size - 1, int(y * ratio))
-            src = (sy * source_size + sx) * 4
-            dst = (y * target_size + x) * 4
-            out[dst : dst + 4] = pixels[src : src + 4]
+            x0 = int(x * ratio)
+            x1 = max(x0 + 1, min(source_size, int((x + 1) * ratio)))
+            red = green = blue = alpha = count = 0
+            for sy in range(y0, y1):
+                base = sy * source_size * 4
+                for sx in range(x0, x1):
+                    index = base + sx * 4
+                    a = pixels[index + 3]
+                    red += pixels[index] * a
+                    green += pixels[index + 1] * a
+                    blue += pixels[index + 2] * a
+                    alpha += a
+                    count += 1
+            index = (y * target_size + x) * 4
+            if alpha:
+                out[index] = red // alpha
+                out[index + 1] = green // alpha
+                out[index + 2] = blue // alpha
+            out[index + 3] = alpha // count
     return out
+
+
+def bmp_entry(pixels, size):
+    """A 32 bit bottom-up DIB with its AND mask, which is what NSIS reads.
+
+    PNG compressed entries are valid ICO, but the NSIS icon loader refuses
+    them, so every size is stored uncompressed.
+    """
+    header = struct.pack("<IiiHHIIiiII", 40, size, size * 2, 1, 32, 0, size * size * 4, 0, 0, 0, 0)
+    body = bytearray()
+    for y in range(size - 1, -1, -1):
+        row = pixels[y * size * 4 : (y + 1) * size * 4]
+        for x in range(size):
+            red, green, blue, alpha = row[x * 4 : x * 4 + 4]
+            body += bytes((blue, green, red, alpha))
+    mask_stride = ((size + 31) // 32) * 4
+    return header + bytes(body) + bytes(mask_stride * size)
 
 
 def write_ico(path, images):
@@ -204,7 +238,7 @@ def main():
         handle.write(png_bytes(BASE, master))
 
     ico_sizes = [16, 24, 32, 48, 64, 128, 256]
-    ico_images = [(size, png_bytes(size, resize(master, BASE, size))) for size in ico_sizes]
+    ico_images = [(size, bmp_entry(resize(master, BASE, size), size)) for size in ico_sizes]
     write_ico(os.path.join(out, "lattice.ico"), ico_images)
 
     icns_images = []
