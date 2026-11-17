@@ -154,6 +154,8 @@ app has not been compiled on either platform.
 ```
 crates/lattice-core   geometry, documents and export. No windowing, no GPU
 crates/lattice-app    the GPUI studio: theme, icons, canvas, shell
+packaging             desktop entry, NSIS script, macOS bundle, generated icons
+tools/icon            draws the application icon as PNG, ICO and ICNS
 tools/parity          extracts the reference engine and dumps golden fixtures
 tools/screenshot      X11 screen capture, PNG reader, layout comparison
 fixtures              golden cells, tile transforms, reference export

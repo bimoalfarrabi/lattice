@@ -158,6 +158,30 @@ The transport, top bar, panel, palette, tip and both corner buttons now stop
 propagation on mouse down. They are painted after the canvas, so their handlers
 run first and the canvas never sees a click that belongs to the chrome.
 
+## 21. Installers wrap the release binary that CI already builds
+
+Linux gets a Debian package and a portable tarball, Windows an NSIS setup, and
+macOS an ad hoc signed bundle in a disk image. Each one wraps the binary its
+build job already produced, so there is one build and no second pipeline.
+
+- The Debian package is assembled with `dpkg-deb` instead of a Rust packaging
+  crate, so the only tool needed is one every Debian system already has.
+- The Windows setup installs per user under `LOCALAPPDATA`. No administrator
+  prompt and no machine wide registry writes, which is what a single user
+  desktop app wants.
+- The macOS bundle is signed ad hoc with `codesign -s -`. Apple Silicon
+  requires a signature before a binary runs at all. It is not notarised, so the
+  first launch needs a right click and Open. Notarising needs an Apple
+  Developer account this project does not have, and a fake claim of a trusted
+  signature would be worse than an honest one.
+- `tools/icon/make_icons.py` draws the application icon and writes PNG, ICO and
+  ICNS. ICO entries are stored as uncompressed bitmaps because the NSIS loader
+  refuses PNG compressed ones, and the downscale is a box filter so 16 and 32
+  pixels stay clean.
+- `makensis` changes its working directory to the script's directory, so
+  `lattice.nsi` runs `!cd` back to the repository root before touching any
+  relative path. Without it the icon resolves inside `packaging/windows`.
+
 ## Open decisions
 
 1. The name Lattice and the icon style were chosen during implementation and

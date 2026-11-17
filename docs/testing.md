@@ -126,6 +126,22 @@ is gone, recapture it first.
 6. Toggle both themes with the gallery open and check contrast on the selected
    thumbnail border.
 
+## Packaging
+
+`cargo test` does not cover the installers. What was checked, and where:
+
+- Linux, locally: the `.deb` is built, extracted with `dpkg-deb`, and the
+  binary runs from the extracted path. The desktop entry passes
+  `desktop-file-validate`. The tarball is unpacked and run the same way, and
+  the released tarball was downloaded again and run once more.
+- Windows and macOS: built in CI only. The setup is a valid NSIS
+  self-extractor, both disk images carry a valid UDF trailer, and the bundle
+  passes `codesign --verify` during the build. Nothing has launched on either
+  system yet, so treat those two installers as untested by hand.
+
+The CI matrix also refuses a `v*` tag whose name does not match the version in
+`Cargo.toml`, so a release cannot be published under the wrong number.
+
 ## Build size
 
 `[profile.dev]` sets `debug = "line-tables-only"`. Full debug info pushed
