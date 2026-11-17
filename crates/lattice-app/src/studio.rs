@@ -990,7 +990,7 @@ impl Studio {
                     .flex()
                     .items_center()
                     .gap(px(31.))
-                    .text_size(px(20.))
+                    .text_size(px(18.5))
                     .font_weight(gpui::FontWeight::SEMIBOLD)
                     .child(div().text_color(theme.muted).child("LogoFX"))
                     .child(
@@ -1182,6 +1182,11 @@ impl Studio {
                     cx.notify();
                 }))
                 .on_scroll_wheel(cx.listener(|this, event: &ScrollWheelEvent, _, cx| {
+                    // Captures must not drift when a stray scroll reaches the
+                    // window while the screenshot hook is driving the state.
+                    if this.shot_mode {
+                        return;
+                    }
                     let delta = f64::from(event.delta.pixel_delta(px(18.)).y);
                     if delta.abs() < 0.01 {
                         return;
@@ -1329,7 +1334,7 @@ impl Render for Studio {
         let theme = self.theme;
         div()
             .size_full()
-            .font_family("Inter")
+            .font_family("Inter Variable")
             .bg(theme.gutter)
             .p(px(8.))
             .flex()
@@ -1467,6 +1472,10 @@ pub fn open(cx: &mut App) {
         .add_fonts(vec![std::borrow::Cow::Borrowed(
             include_bytes!("../assets/InterVariable.ttf").as_slice(),
         )]);
+
+    // The bundled file is the variable font, whose family name is
+    // "Inter Variable". Asking for "Inter" silently falls back to a system
+    // face on Linux and panics on Windows.
     let bounds = Bounds::centered(None, window_size(), cx);
     cx.open_window(
         WindowOptions {

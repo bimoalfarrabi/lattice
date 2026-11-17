@@ -6,4 +6,10 @@ license.workspace = true
 
 [dependencies]
 lattice-core.workspace = true
+gpui = { version = "0.2.2", default-features = false, features = ["font-kit", "wayland", "x11", "windows-manifest"] }
+
+# The test context lives behind this feature. Keeping it out of [dependencies]
+# means the shipped binary does not carry test scaffolding, which matters: with
+# the feature on, a font that fails to resolve panics instead of falling back.
+[dev-dependencies]
 gpui = { version = "0.2.2", default-features = false, features = ["font-kit", "wayland", "x11", "windows-manifest", "test-support"] }

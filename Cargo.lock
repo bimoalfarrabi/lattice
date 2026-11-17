@@ -2930,7 +2930,7 @@ dependencies = [
 
 [[package]]
 name = "lattice-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "gpui",
  "lattice-core",
@@ -2938,7 +2938,7 @@ dependencies = [
 
 [[package]]
 name = "lattice-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "resvg",
  "serde",
