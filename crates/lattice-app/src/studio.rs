@@ -359,6 +359,13 @@ impl Studio {
         } else {
             None
         };
+        trace(&format!(
+            "refresh inside={} pointer={:?} bounds={:?} -> {:?}",
+            self.pointer_inside,
+            self.pointer,
+            self.bounds.get(),
+            next
+        ));
         if next != self.hovered {
             self.hovered = next;
             cx.notify();
@@ -1119,6 +1126,7 @@ impl Studio {
                     // tinted after the pointer leaves the window or crosses
                     // into the panel.
                     .on_hover(cx.listener(|this, hovered: &bool, _, cx| {
+                        trace(&format!("hover {hovered}"));
                         this.pointer_inside = *hovered;
                         this.refresh_hover(cx);
                     }))
@@ -1180,6 +1188,7 @@ impl Studio {
                         cx.notify();
                         return;
                     }
+                    trace(&format!("move {:?}", event.position));
                     this.pointer = Some(event.position);
                     this.refresh_hover(cx);
                     if let Some((from, erase)) = this.drag.as_ref().map(|d| (d.last, d.erase)) {
@@ -1481,6 +1490,18 @@ impl Render for Studio {
 }
 
 /// Opens the studio window.
+/// Appends a diagnostic line when `LATTICE_TRACE` names a file. Used to chase
+/// pointer problems on platforms that cannot be debugged locally.
+pub fn trace(message: &str) {
+    let Ok(path) = std::env::var("LATTICE_TRACE") else {
+        return;
+    };
+    use std::io::Write as _;
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(file, "{message}");
+    }
+}
+
 /// Window size, from `LATTICE_SIZE=WxH` when set, else 1680 by 1000.
 fn window_size() -> gpui::Size<Pixels> {
     let parsed = std::env::var("LATTICE_SIZE").ok().and_then(|value| {
