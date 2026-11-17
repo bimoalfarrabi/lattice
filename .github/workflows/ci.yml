@@ -106,6 +106,7 @@ jobs:
         run: |
           choco install nsis -y --no-progress
           $env:Path += ";C:\Program Files (x86)\NSIS"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
           makensis `
             "/DVERSION=${{ steps.version.outputs.value }}" `
             "/DBINARY=target\${{ matrix.target }}\release\lattice-app.exe" `
